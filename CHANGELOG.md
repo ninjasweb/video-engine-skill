@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0 — 2026-10-27
+
+- Subtitle rules as a general standard (`references/timeline-and-audio.md` → Subtitles): numbers as words for the voice and digits in subtitles/SRT (`numeralize`: runs merged into one timed token, articles kept, times, years, thousands separators), CapCut-style karaoke (accent on the spoken word, short pop without persistent scale) and a check on the final MP4.
+
 ## 1.1.0 — 2026-10-27
 
 - Voice: step-by-step ElevenLabs setup (key, voice, `eleven_v3` tags, history recovery, forced alignment) and **Fish Audio as an

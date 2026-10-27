@@ -136,4 +136,4 @@ Default to the provider the series already uses. For a new series, run one block
 ## Tokenization rules
 
 - Word = run of non-space characters with its punctuation; norm = lowercase, no diacritics, `[a-z0-9ñ]` only. Drop tokens with an empty norm ("...").
-- Number words (including compounds like "treinta y cinco", "veintitrés" and ordinals like "primer/segunda") must be recognized for the "don't reveal before it's said" checks.
+- Number words (including compounds like "treinta y cinco", "veintitrés" and ordinals like "primer/segunda") must be recognized for the "don't reveal before it's said" checks. Write numbers as words in `tts_text`; subtitles convert them back to digits for reading (see `timeline-and-audio.md` → Subtitles).

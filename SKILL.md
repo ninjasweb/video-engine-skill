@@ -56,6 +56,7 @@ If the user already has a project built with this engine, read it before buildin
 - Objects created by "transfer/take out" helpers must also get a `remove` time when the scene changes, or they leak into later scenes.
 - Moving objects during a question's wait window breaks "freeze during wait"; move after the wait ends.
 - Never show a number/answer the narration hasn't said yet (in scene, labels, equations, subtitles). Split subtitle cues at number words.
+- Numbers are words in `tts_text` but digits in subtitles and SRT ("dos mil veinte" → "2020", "las nueve y ocho" → "9:08"): merge each run of number words into one timed token. Karaoke highlights the spoken word in one accent colour, with a short pop only and no persistent scale, or words run together. Rules in `references/timeline-and-audio.md` → Subtitles.
 - Render concurrency: ~2.6 GB RAM per Chromium instance; 6 on an 8 GB Mac → massive swap and a stalled render. Default to `floor(totalmem/2.6GB)`.
 - Burned-in subtitles need a reserved band; validate that no object enters it.
 - Long titles in fixed boxes overflow — auto-size by length.
