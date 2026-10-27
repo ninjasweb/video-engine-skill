@@ -1,6 +1,6 @@
 ---
 name: video-engine
-description: Produce narrated, animated videos programmatically (any niche, format or visual style) — script → AI voice (ElevenLabs) → word-level alignment → deterministic animation (Remotion + SVG) → synced subtitles, SFX/music mix → validated MP4 + SRT + thumbnail + upload metadata. Use when the user wants to create, plan, restyle or batch-produce explainer/educational/kids/product/story/short-form videos, design a visual style from references, set up a video pipeline, or fix sync/subtitle/render problems in one.
+description: Produce narrated, animated videos programmatically (any niche, format or visual style) — script → AI voice (ElevenLabs, or Fish Audio as an alternative) → word-level alignment → deterministic animation (Remotion + SVG) → synced subtitles, SFX/music mix → validated MP4 + SRT + thumbnail + upload metadata. Use when the user wants to create, plan, restyle or batch-produce explainer/educational/kids/product/story/short-form videos, design a visual style from references, set up a video pipeline, or fix sync/subtitle/render problems in one.
 ---
 
 # Video engine
@@ -21,7 +21,7 @@ If the user already has a project built with this engine, read it before buildin
 3. **Pure function of time.** Scene state = f(t). No state between frames → preview == render at any frame, and QA can sample any instant.
 4. **Deterministic textures.** Seeded noise in the object's local coordinates → no boiling/flicker. Measure it (frame diff in static regions ≈ 0).
 5. **Validate before rendering; review frames before and after.** Automatic checks catch logic/timing bugs; a contact sheet catches composition bugs (overlaps, crowding, hidden elements). Both are required.
-6. **Spend money only with consent.** TTS calls cost credits: dry-run (blocks + characters) → ask → generate. Cache by hash of every input that affects the audio.
+6. **Spend money only with consent.** TTS calls cost credits: dry-run (blocks + characters, or UTF-8 bytes for Fish Audio) → ask → generate. Cache by hash of every input that affects the audio, provider included.
 7. **Report honestly.** State what was verified automatically, what was looked at, and what was NOT (e.g. "I did not listen to the audio").
 8. **Many videos, one engine — from the first video.** Shared engine + reusable styles + one self-contained folder per video (or per series), with that video's own scripts, voice, scene, thumbnail, assets and per-video components. The engine never imports a video or a style; every command takes the video. See `references/project-layout.md`.
 
@@ -31,7 +31,7 @@ If the user already has a project built with this engine, read it before buildin
 1. **Brief & format** — audience, goal, platform, duration, aspect ratio, language/locale, monetization constraints (e.g. YouTube "made for kids"). See `references/formats-and-niches.md`.
 2. **Style bible** — infer from client references or propose 2–3 directions; lock palette, typography, texture, character, motion language, sound palette in a `style.json`/doc. See `references/style-design.md`.
 3. **Script as data** — blocks with `tts_text` (with voice tags), `subtitle_text`, optional question/wait, visual instructions, expected answers/facts. Validate with a JSON schema.
-4. **Voice** — ElevenLabs with timestamps (or import manual clips + local forced alignment). See `references/voice-and-alignment.md`.
+4. **Voice** — ElevenLabs with timestamps (default), Fish Audio's streaming endpoint with timestamps (alternative), or imported clips + local forced alignment. One provider and one voice per series. Output per block: clip + word timings. See `references/voice-and-alignment.md`.
 5. **Timeline** — place clips, measured gaps/waits, master voice track normalized, per-frame voice envelope, SRT. See `references/timeline-and-audio.md`.
 6. **Scene script** — per video, a declarative builder using the kit (objects, moves, labels, equations/text reveals, poses, SFX, decor). See `references/animation-remotion.md`.
 7. **Validate** — schema, waits, "nothing revealed before it's said", counts/answers, no overlaps, safe areas, subtitle band free. See `references/qa-and-validation.md`.
@@ -43,7 +43,8 @@ If the user already has a project built with this engine, read it before buildin
 
 - **Remotion 4 (React + SVG)** for deterministic frame rendering, Studio/Player preview, CLI batch. Check license (free for individuals/≤3 employees).
 - **Chromium GL `angle`** on macOS (≈30% faster). Hardware encoders rarely help (bottleneck is drawing) — measure.
-- **ElevenLabs** `POST /v1/text-to-speech/{voice}/with-timestamps` (char alignment). Library voices need a paid plan via API.
+- **ElevenLabs** `POST /v1/text-to-speech/{voice}/with-timestamps` (char alignment), model `eleven_v3` with `[tags]`. Library voices need a paid plan via API.
+- **Fish Audio** (alternative): `POST /v1/tts/stream/with-timestamp` (SSE, word-like segments per chunk), model in the `model` header (`s2.1-pro`), voice = `reference_id`. Billed per UTF-8 byte; no history endpoint to recover timeouts.
 - **stable-ts (Whisper)** in a Python venv for local forced alignment of manual clips; ElevenLabs forced-alignment API as the precise alternative.
 - **ffmpeg** for mixing, loudness (EBU R128), remux/faststart, contact sheets, flicker measurement.
 - Fonts: OFL (Google Fonts) stored locally with license files. SFX/music: synthesize procedurally or use licensed assets; keep copies + license table.
@@ -58,6 +59,8 @@ If the user already has a project built with this engine, read it before buildin
 - Render concurrency: ~2.6 GB RAM per Chromium instance; 6 on an 8 GB Mac → massive swap and a stalled render. Default to `floor(totalmem/2.6GB)`.
 - Burned-in subtitles need a reserved band; validate that no object enters it.
 - Long titles in fixed boxes overflow — auto-size by length.
+- Voice tags are provider- and model-specific: ElevenLabs v3 `[excited]`, Fish Audio S2 `[free text]`, Fish S1 `(excited)`. A tag the model doesn't understand may be read aloud. Keep a per-series `allowed_tags` list, reject unknown tags when building scripts, and rewrite + re-test one block by ear when switching provider.
+- Write numbers as words in `tts_text` and turn the provider's number normalization off (Fish `normalize: false`), so the alignment contains the word the validator and the subtitle splitter look for.
 - Check each clip's content (transcribe → compare to script, map numerals ↔ words) before trusting imported audio; clips may be missing or out of order. Do the same for generated TTS ("listen" by proxy: Whisper transcript vs script, all numbers present).
 - Remotion `bundle()` copies `public/` (all voices) to the OS temp dir on every call and never deletes it; many stills runs filled a 460 GB disk. Always `rm -rf` the bundle when the script ends. Watch free disk during long batches.
 - SVG filters use the element's bounding box: a perfectly horizontal or vertical path (zero-area bbox) with a filter renders NOTHING. Balance arms, number-line ticks and guide lines vanished this way. Straight axis-aligned strokes need no filter.
